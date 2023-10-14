@@ -13,6 +13,39 @@ import matplotlib.pyplot as plt
 
 
 ##############################################################################################################
+############ Variable Neighborhood Search  ###################################################################
+##############################################################################################################
+def VariableNeighborhoodSearch(config, cost_function, x_range):
+    global_best = -2e31
+    cur_neighborhood = 0 # 0 indexed neighborhoods
+    number_neighborhoods = pow(config['variable_neighborhood_search']['number_slices'], config['dimension'])
+
+    # time limit? number of passes?
+    num_passes = 0
+    while num_passes < config['variable_neighborhood_search']['number_passes']: 
+        # local search neighborhood
+        # edit xrange since its just a neighborhood search
+        print(cur_neighborhood)
+        neighborhood_x_range = GetNeighborhood(config=config, x_range=x_range, neighborhood_number=cur_neighborhood)
+
+        best_x, best_cost, x_history, cost_history = search_algorithms.local_search(cost_function=cost_function, max_itr=config['local_search']['max_itr'], convergence_threshold=config['local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=neighborhood_x_range, hide_progress_bar=True)
+
+        if best_cost > global_best:
+            global_best = best_cost
+            cur_neighborhood = 0 
+        elif cur_neighborhood == number_neighborhoods:
+            cur_neighborhood = 0
+        else: 
+            cur_neighborhood += 1
+        
+        num_passes += 1
+
+    return global_best
+
+
+
+
+##############################################################################################################
 ############ Local Search (Hill Climbing) Algorithm ##########################################################
 ##############################################################################################################
 def local_search(cost_function: Callable, max_itr: int, convergence_threshold: float, 
@@ -332,3 +365,21 @@ def bound_solution_in_x_range(x: List[float], x_range: List[List[float]]) -> Lis
         elif x[j] > x_range[j][1]:
             x[j] = x_range[j][1]
     return x
+
+
+def GetNeighborhood(config, x_range, neighborhood_number):
+    # uses 0 indexed neighborhood numbers
+    min_x = x_range[0][1]
+    number_slices = config['variable_neighborhood_search']['number_slices']
+    slice_size = (min_x - x_range[0][0]) / number_slices
+    dimension = config['dimension']
+    neighborhood_x_range = []
+
+    # If d=2, slices=5, 25 neighborhoods exist
+    # if neighborhood number is 17, then got to increment d1 3 times and increment d2 2 times
+    for d in range(dimension - 1, -1, -1):
+        factor = pow(number_slices, d)
+        add_slices = int(neighborhood_number / factor)
+        neighborhood_x_range.append([min_x + add_slices * slice_size, min_x + (add_slices + 1) * slice_size ])
+        neighborhood_number -= factor * add_slices
+    return neighborhood_x_range

@@ -39,28 +39,14 @@ def main(config: Dict) -> None:
                                                                                     convergence_threshold=config['local_search']['convergence_threshold'],
                                                                                     x_initial=config['x_initial'], x_range=x_range)
     elif config['search_algorithm'] == 'iterative_local_search':
-        best_x, best_cost, x_history, cost_history = search_algorithms.iterative_local_search(cost_function=cost_function, max_itr_ils=config['iterative_local_search']['max_itr_ils'],
-                                                                                              max_itr_ls=config['iterative_local_search']['max_itr_ls'],
-                                                                                              convergence_threshold=config['iterative_local_search']['convergence_threshold'],
-                                                                                              x_initial=config['x_initial'], x_range=x_range)
+        best_x, best_cost, x_history, cost_history = search_algorithms.iterative_local_search(cost_function=cost_function, max_itr_ils=config['iterative_local_search']['max_itr_ils'], max_itr_ls=config['iterative_local_search']['max_itr_ls'], convergence_threshold=config['iterative_local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=x_range)
     elif config['search_algorithm'] == 'simulated_annealing':
-        best_x, best_cost, x_history, cost_history = search_algorithms.simulated_annealing(cost_function=cost_function, max_itr=config['simulated_annealing']['max_itr'],
-                                                                                           temperature=config['simulated_annealing']['temperature'],
-                                                                                           alpha=config['simulated_annealing']['alpha'],
-                                                                                           beta=config['simulated_annealing']['beta'],
-                                                                                           x_initial=config['x_initial'], x_range=x_range,
-                                                                                           temperature_decrement_method=config['simulated_annealing']['temperature_decrement_method'])
+        best_x, best_cost, x_history, cost_history = search_algorithms.simulated_annealing(cost_function=cost_function, max_itr=config['simulated_annealing']['max_itr'], temperature=config['simulated_annealing']['temperature'], alpha=config['simulated_annealing']['alpha'], beta=config['simulated_annealing']['beta'], x_initial=config['x_initial'], x_range=x_range, temperature_decrement_method=config['simulated_annealing']['temperature_decrement_method'])
     elif config['search_algorithm'] == 'pso':
-        best_x, best_cost, x_history, cost_history, individuals = search_algorithms.pso(cost_function=cost_function, num_particles=config['pso']['num_particles'], max_itr=config['pso']['max_itr'],
-                                                                                        alpha_1=config['pso']['alpha_1'], alpha_2=config['pso']['alpha_2'], alpha_3=config['pso']['alpha_3'],
-                                                                                        x_initial=config['x_initial'], x_range=x_range,
-                                                                                        local_best_option=config['pso']['local_best_option'],
-                                                                                        global_best_option=config['pso']['global_best_option'],
-                                                                                        ls_max_itr=config['pso']['local_search']['max_itr'], ls_convergence_threshold=config['pso']['local_search']['convergence_threshold'])
+        best_x, best_cost, x_history, cost_history, individuals = search_algorithms.pso(cost_function=cost_function, num_particles=config['pso']['num_particles'], max_itr=config['pso']['max_itr'], alpha_1=config['pso']['alpha_1'], alpha_2=config['pso']['alpha_2'], alpha_3=config['pso']['alpha_3'], x_initial=config['x_initial'], x_range=x_range, local_best_option=config['pso']['local_best_option'], global_best_option=config['pso']['global_best_option'], ls_max_itr=config['pso']['local_search']['max_itr'], ls_convergence_threshold=config['pso']['local_search']['convergence_threshold'])
     elif config['search_algorithm'] == 'ga':
-        best_x, best_cost, x_history, cost_history, individuals = search_algorithms.ga(cost_function=cost_function, population_size=config['ga']['population_size'], max_itr=config['ga']['max_itr'],
-                                                                                       mutation_rate=config['ga']['mutation_rate'], crossover_rate=config['ga']['crossover_rate'], x_initial=config['x_initial'],
-                                                                                       x_range=x_range)
+        best_x, best_cost, x_history, cost_history, individuals = search_algorithms.ga(cost_function=cost_function, population_size=config['ga']['population_size'], max_itr=config['ga']['max_itr'], mutation_rate=config['ga']['mutation_rate'], crossover_rate=config['ga']['crossover_rate'], x_initial=config['x_initial'], x_range=x_range)
+    
 
     if len(best_x) == 2: 
         # If the dimensionality is 2, visualize the results.
