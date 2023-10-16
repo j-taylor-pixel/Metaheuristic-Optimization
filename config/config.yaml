@@ -3,6 +3,10 @@ cost_function: schwefel  # Options: sphere, schwefel, schaffer, griewank, func7,
 dimension: 2
 x_initial: null  # A d-dimensional list, such as [1.0, -1.0], or null. If null, the x_initial will be a random point in the domain.
 
+generalizable_neighborhood_search:
+  number_passes: 100
+  layer_size: 100 # layer 1 is 100x100, layer 2 is 200x200 (overlapping)
+
 variable_neighborhood_search:
   number_slices: 5 # cut each dimension into this many pieces
   # number of neighborhoods is slice_size^dimension

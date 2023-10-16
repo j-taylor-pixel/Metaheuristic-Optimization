@@ -13,16 +13,13 @@ import matplotlib.pyplot as plt
 
 
 ##############################################################################################################
-############ Variable Neighborhood Search  ###################################################################
+############ Variable Neighborhood Search Algorithm ##########################################################
 ##############################################################################################################
-def VariableNeighborhoodSearch(config, cost_function, x_range):
+def VariableNeighborhoodSearch(config, cost_function: Callable, x_range):
     best_cost = 2e31 - 1
-    cur_neighborhood = 0
     number_neighborhoods = pow(config['variable_neighborhood_search']['number_slices'], config['dimension'])
-    x_history = []
-    cost_history = []
-    best_x = 0
-    num_passes = 0  # search can exit after time limit or max number of passes
+    x_history, cost_history = [], []
+    best_x, num_passes, cur_neighborhood = 0, 0, 0
     while num_passes < config['variable_neighborhood_search']['number_passes']:
         num_passes += 1
         neighborhood_x_range = GetNeighborhood(config=config, x_range=x_range, neighborhood_number=cur_neighborhood)
@@ -34,15 +31,37 @@ def VariableNeighborhoodSearch(config, cost_function, x_range):
             best_cost = l_best_cost
             best_x = l_best_x
             cur_neighborhood = 0 
-        elif cur_neighborhood == number_neighborhoods:
+        elif cur_neighborhood + 1 == number_neighborhoods:
             cur_neighborhood = 0
         else: 
             cur_neighborhood += 1
     return best_x, best_cost, x_history, cost_history
 
+##############################################################################################################
+############ Generalized Neighborhood Search Algorithm #######################################################
+##############################################################################################################
 
-def GeneralizedNeighborhoodSearch():
-    return
+def GeneralizedNeighborhoodSearch(config, cost_function, x_range):
+    x_history, cost_history = [], []
+    #initial local search to find x*
+    best_x, l_best_cost, l_x_history, l_cost_history = local_search(cost_function=cost_function, max_itr=config['local_search']['max_itr'], convergence_threshold=config['local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=x_range, hide_progress_bar=True)
+    # utilize l_best_x
+    best_cost = 2e31
+    #layers can be overlapping
+    num_passes = 0
+    while num_passes < config['generalizable_neighborhood_search']['number_passes']:
+        num_passes += 1 
+        #todo get layer xrange
+        v_best_x, v_best_cost, v_x_history, v_cost_history = VariableNeighborhoodSearch(config=config, cost_function=cost_function, x_range=x_range)
+        if v_best_cost < best_cost:
+            best_cost = v_best_cost
+        else:
+            #expand layer
+            print("poo")
+
+        
+
+    return best_x, best_cost, x_history, cost_history
 
 
 ##############################################################################################################
@@ -366,20 +385,28 @@ def bound_solution_in_x_range(x: List[float], x_range: List[List[float]]) -> Lis
             x[j] = x_range[j][1]
     return x
 
-
 def GetNeighborhood(config, x_range, neighborhood_number):
     # uses 0 indexed neighborhood numbers
     min_x = x_range[0][0]
     number_slices = config['variable_neighborhood_search']['number_slices']
     slice_size = (x_range[0][1] - min_x) / number_slices
-    dimension = config['dimension']
     neighborhood_x_range = []
 
-    # If d=2, slices=5, 25 neighborhoods exist
-    # if neighborhood number is 17, then got to increment d1 3 times and increment d2 2 times
-    for d in range(dimension - 1, -1, -1):
+    for d in range(config['dimension'] - 1, -1, -1):
         factor = pow(number_slices, d)
         add_slices = int(neighborhood_number / factor)
         neighborhood_x_range.append([min_x + add_slices * slice_size, min_x + (add_slices + 1) * slice_size ])
         neighborhood_number -= factor * add_slices
     return neighborhood_x_range
+
+
+def GetGNSLayerRange(config, x_range, xstar, layers_size):
+    #range is layers size square around x_range,
+    #should be bounded in size of overall fucntion
+    #if x is [100,250], size is 100
+    gns_layers_range = []
+    for xi in xstar:
+        gns_layers_range.append([xi-layers_size, xi+layers_size])
+
+    return gns_layers_range
+
