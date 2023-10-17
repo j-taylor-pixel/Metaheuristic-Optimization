@@ -46,7 +46,8 @@ def main(config: Dict) -> None:
         best_x, best_cost, x_history, cost_history, individuals = search_algorithms.ga(cost_function=cost_function, population_size=config['ga']['population_size'], max_itr=config['ga']['max_itr'], mutation_rate=config['ga']['mutation_rate'], crossover_rate=config['ga']['crossover_rate'], x_initial=config['x_initial'], x_range=x_range)
     elif config['search_algorithm'] == 'variable_neighborhood_search':
         best_x, best_cost, x_history, cost_history = search_algorithms.VariableNeighborhoodSearch(config=config, cost_function=cost_function, x_range=x_range)
-        #print(x_history)
+    elif config['search_algorithm'] == 'generalized_neighborhood_search':
+        best_x, best_cost, x_history, cost_history = search_algorithms.GeneralizedNeighborhoodSearch(config=config, cost_function=cost_function, x_range=x_range)        
 
     if len(best_x) == 2: 
         # If the dimensionality is 2, visualize the results.

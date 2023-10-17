@@ -1,11 +1,10 @@
-search_algorithm: variable_neighborhood_search  # Options: local_search, iterative_local_search, simulated_annealing, pso, ga, variable_neighborhood_search
+search_algorithm: generalized_neighborhood_search  # Options: local_search, iterative_local_search, simulated_annealing, pso, ga, variable_neighborhood_search, generalized_neighborhood_search
 cost_function: schwefel  # Options: sphere, schwefel, schaffer, griewank, func7, func8, func9, func11, revenue
 dimension: 2
 x_initial: null  # A d-dimensional list, such as [1.0, -1.0], or null. If null, the x_initial will be a random point in the domain.
 
-generalizable_neighborhood_search:
-  number_passes: 100
-  layer_size: 100 # layer 1 is 100x100, layer 2 is 200x200 (overlapping)
+generalized_neighborhood_search:
+  layer_size: 250 
 
 variable_neighborhood_search:
   number_slices: 5 # cut each dimension into this many pieces
@@ -13,13 +12,13 @@ variable_neighborhood_search:
   number_passes: 100 # should increase for best solution
 
 local_search:
-  max_itr: 500
-  convergence_threshold: 0.001
+  max_itr: 400
+  convergence_threshold: 1
 
 iterative_local_search:
   max_itr_ils: 20  # Max iterations for iterative local search (outer loop)
   max_itr_ls: 200  # Max iterations for local search (inner loop)
-  convergence_threshold: 0.001
+  convergence_threshold: 1
 
 simulated_annealing:
   max_itr: 50

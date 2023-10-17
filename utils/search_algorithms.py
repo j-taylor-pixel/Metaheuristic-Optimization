@@ -10,12 +10,12 @@ import numpy as np
 from tqdm import tqdm
 from typing import Tuple, List, Callable, Optional
 import matplotlib.pyplot as plt
-
+import threading
 
 ##############################################################################################################
 ############ Variable Neighborhood Search Algorithm ##########################################################
 ##############################################################################################################
-def VariableNeighborhoodSearch(config, cost_function: Callable, x_range):
+def VariableNeighborhoodSearch(config, cost_function: Callable, x_range, results = None):
     best_cost = 2e31 - 1
     number_neighborhoods = pow(config['variable_neighborhood_search']['number_slices'], config['dimension'])
     x_history, cost_history = [], []
@@ -23,6 +23,7 @@ def VariableNeighborhoodSearch(config, cost_function: Callable, x_range):
     while num_passes < config['variable_neighborhood_search']['number_passes']:
         num_passes += 1
         neighborhood_x_range = GetNeighborhood(config=config, x_range=x_range, neighborhood_number=cur_neighborhood)
+        print(neighborhood_x_range)
         l_best_x, l_best_cost, l_x_history, l_cost_history = local_search(cost_function=cost_function, max_itr=config['local_search']['max_itr'], convergence_threshold=config['local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=neighborhood_x_range, hide_progress_bar=True)
 
         x_history.append(l_best_x)
@@ -35,6 +36,10 @@ def VariableNeighborhoodSearch(config, cost_function: Callable, x_range):
             cur_neighborhood = 0
         else: 
             cur_neighborhood += 1
+    # store results in mutable object list if threading is used in gns
+    if results != None:
+        print("adding results")
+        results.append([best_x, best_cost, x_history, cost_history])
     return best_x, best_cost, x_history, cost_history
 
 ##############################################################################################################
@@ -44,23 +49,31 @@ def VariableNeighborhoodSearch(config, cost_function: Callable, x_range):
 def GeneralizedNeighborhoodSearch(config, cost_function, x_range):
     x_history, cost_history = [], []
     #initial local search to find x*
-    best_x, l_best_cost, l_x_history, l_cost_history = local_search(cost_function=cost_function, max_itr=config['local_search']['max_itr'], convergence_threshold=config['local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=x_range, hide_progress_bar=True)
-    # utilize l_best_x
-    best_cost = 2e31
+    best_x, best_cost, l_x_history, l_cost_history = local_search(cost_function=cost_function, max_itr=config['local_search']['max_itr'], convergence_threshold=config['local_search']['convergence_threshold'], x_initial=config['x_initial'], x_range=x_range, hide_progress_bar=True)
     #layers can be overlapping
-    num_passes = 0
-    while num_passes < config['generalizable_neighborhood_search']['number_passes']:
-        num_passes += 1 
-        #todo get layer xrange
-        v_best_x, v_best_cost, v_x_history, v_cost_history = VariableNeighborhoodSearch(config=config, cost_function=cost_function, x_range=x_range)
-        if v_best_cost < best_cost:
-            best_cost = v_best_cost
-        else:
-            #expand layer
-            print("poo")
+    layer_size = config['generalized_neighborhood_search']['layer_size']
+    current_layer_size = config['generalized_neighborhood_search']['layer_size']
+    results = []
+    gns_threads = [None] * int(x_range[0][1] / layer_size) # assumes x_range is centered on zero
+    for i, x in enumerate(best_x):
+        x = layer_size * int(x/layer_size)
+        best_x[i] = layer_size * int(x/layer_size)
+        best_x[i] = 0
 
-        
-
+    for i in range(len(gns_threads)):
+        gns_x_range = GetGNSLayerRange(x_range=x_range, xstar=best_x, layers_size=current_layer_size)
+        gns_threads[i] = threading.Thread(target=VariableNeighborhoodSearch, args=(config, cost_function, gns_x_range, results))
+        #VariableNeighborhoodSearch(config=config, cost_function=cost_function,x_range=gns_x_range, results=results)
+        gns_threads[i].start()
+        gns_threads[i].join() # sorry my pc is too low spec to multi thread so ill do each thread one at a time
+        current_layer_size += layer_size 
+    
+    for result in results:
+        x_history += result[2]
+        cost_history += result[3]
+        if result[1] < best_cost:
+            best_x = result[0]
+            best_cost = result[1]
     return best_x, best_cost, x_history, cost_history
 
 
@@ -400,13 +413,16 @@ def GetNeighborhood(config, x_range, neighborhood_number):
     return neighborhood_x_range
 
 
-def GetGNSLayerRange(config, x_range, xstar, layers_size):
-    #range is layers size square around x_range,
-    #should be bounded in size of overall fucntion
-    #if x is [100,250], size is 100
+def GetGNSLayerRange(x_range, xstar, layers_size):
     gns_layers_range = []
-    for xi in xstar:
-        gns_layers_range.append([xi-layers_size, xi+layers_size])
-
+    for xi in xstar: 
+        lower = xi - layers_size
+        upper = xi + layers_size
+        if lower < x_range[0][0]:
+            lower = x_range[0][0]
+            upper = lower + 2 * layers_size
+        elif upper > x_range[0][1]:
+            upper = x_range[0][1]
+            lower = upper - 2 * layers_size
+        gns_layers_range.append([lower, upper])
     return gns_layers_range
-
